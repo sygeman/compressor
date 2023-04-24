@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { MinioService } from 'nestjs-minio-client';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { unlink } from 'fs/promises';
@@ -22,9 +22,9 @@ export class AppController {
         .input(tmpFile)
         .inputOptions('-hwaccel auto')
         .save(tmpDoneFile)
-        .on('progress', (progress) => {
-          // console.log(progress.percent);
-        })
+        // .on('progress', (progress) => {
+        // console.log(progress.percent);
+        // })
         .on('error', (err) => reject(err))
         .on('end', async () => {
           await unlink(tmpFile);
@@ -38,12 +38,13 @@ export class AppController {
       tmpDoneFile,
     );
 
-    return unlink(tmpDoneFile);
+    await unlink(tmpDoneFile);
+
+    await this.minioService.client.removeObject(inputBucket, inputFile);
   }
 
   @Post()
   async video(@Body() videoDto: VideoDto): Promise<string> {
-    console.log({ input: videoDto.input, output: videoDto.output });
     await this.compress({ input: videoDto.input, output: videoDto.output });
     return 'done';
   }
