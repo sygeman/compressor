@@ -12,4 +12,4 @@ RUN npm run build \
     && npm prune --production
 
 RUN mkdir -p ./tmp/
-CMD node ./dist/main.js
+CMD npm run start
