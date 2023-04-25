@@ -4,8 +4,10 @@ RUN apk add --no-cache ffmpeg
 
 FROM base as dependencies
 
-COPY package*.json ./
-COPY main.js ./
-RUN npm ci
+COPY ["package.json", "package-lock.json*", "./"]
+
+RUN npm install --production
+
+COPY . .
 
 CMD npm run start
