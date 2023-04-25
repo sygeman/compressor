@@ -8,5 +8,4 @@ COPY package*.json ./
 COPY main.js ./
 RUN npm ci
 
-RUN mkdir -p ./tmp/
 CMD npm run start
