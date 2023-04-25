@@ -4,25 +4,13 @@
   "version": "1.0.0",
   "description": "",
   "license": "MIT",
+  "type": "module",
   "scripts": {
-    "start": "ts-node ./main.ts"
+    "start": "node main.js"
   },
   "dependencies": {
     "dotenv": "16.0.3",
     "fluent-ffmpeg": "2.1.2",
     "minio": "7.0.33"
-  },
-  "devDependencies": {
-    "@types/fluent-ffmpeg": "2.1.21",
-    "@types/minio": "7.0.18",
-    "@types/node": "18.16.0",
-    "@typescript-eslint/eslint-plugin": "5.59.1",
-    "@typescript-eslint/parser": "5.59.1",
-    "eslint": "8.39.0",
-    "eslint-config-prettier": "8.8.0",
-    "eslint-plugin-prettier": "4.2.1",
-    "prettier": "2.8.8",
-    "ts-node": "10.9.1",
-    "typescript": "5.0.4"
   }
 }

@@ -1,15 +1,14 @@
 import { extname, parse } from 'path';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { unlink } from 'fs/promises';
-import type { BucketItem } from 'minio';
 import * as Minio from 'minio';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
 export class App {
-  queue: Map<string, { item: BucketItem }> = new Map();
-  current: string | null = null;
+  queue = new Map();
+  current = null;
   progress = 0;
   bucket = process.env['TARGET_BUCKET'];
   inputExt = '.mp4';
@@ -40,7 +39,7 @@ export class App {
     this.compress(item);
   }
 
-  async compress(item: BucketItem) {
+  async compress(item) {
     const name = parse(item.name).name;
     const tmpFile = `./tmp/${item.etag}${this.inputExt}`;
     const tmpDoneFile = `./tmp/${item.etag}${this.outputExt}`;
