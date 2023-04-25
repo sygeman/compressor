@@ -1,8 +1,8 @@
-import { extname, parse } from 'path';
-import * as ffmpeg from 'fluent-ffmpeg';
-import { unlink } from 'fs/promises';
-import * as Minio from 'minio';
-import * as dotenv from 'dotenv';
+import { extname, parse } from "path";
+import ffmpeg from "fluent-ffmpeg";
+import { unlink } from "fs/promises";
+import Minio from "minio";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -10,21 +10,21 @@ export class App {
   queue = new Map();
   current = null;
   progress = 0;
-  bucket = process.env['TARGET_BUCKET'];
-  inputExt = '.mp4';
-  outputExt = '.webm';
+  bucket = process.env["TARGET_BUCKET"];
+  inputExt = ".mp4";
+  outputExt = ".webm";
 
   minioClient = new Minio.Client({
-    endPoint: process.env['MINIO_ENDPOINT'],
-    port: parseInt(process.env['MINIO_PORT']),
+    endPoint: process.env["MINIO_ENDPOINT"],
+    port: parseInt(process.env["MINIO_PORT"]),
     useSSL: false,
-    accessKey: process.env['MINIO_ACCESS_KEY'],
-    secretKey: process.env['MINIO_SECRET_KEY'],
+    accessKey: process.env["MINIO_ACCESS_KEY"],
+    secretKey: process.env["MINIO_SECRET_KEY"],
   });
 
   async fetchBucket() {
     const stream = this.minioClient.listObjectsV2(this.bucket);
-    stream.on('data', (item) => {
+    stream.on("data", (item) => {
       if (extname(item.name) === this.inputExt && !this.queue.has(item.etag)) {
         this.queue.set(item.etag, { item });
         if (this.current === null) this.getNext();
@@ -48,11 +48,11 @@ export class App {
     await new Promise((resolve, reject) => {
       ffmpeg()
         .input(tmpFile)
-        .inputOptions('-hwaccel auto')
+        .inputOptions("-hwaccel auto")
         .save(tmpDoneFile)
-        .on('progress', ({ percent }) => (this.progress = percent.toFixed(2)))
-        .on('error', (err) => reject(err))
-        .on('end', async () => {
+        .on("progress", ({ percent }) => (this.progress = percent.toFixed(2)))
+        .on("error", (err) => reject(err))
+        .on("end", async () => {
           await unlink(tmpFile);
           resolve(true);
         });
@@ -61,7 +61,7 @@ export class App {
     await this.minioClient.fPutObject(
       this.bucket,
       `${name}${this.outputExt}`,
-      tmpDoneFile,
+      tmpDoneFile
     );
     await unlink(tmpDoneFile);
     await this.minioClient.removeObject(this.bucket, item.name);
