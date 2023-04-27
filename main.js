@@ -9,7 +9,6 @@ dotenv.config();
 export class App {
   queue = new Map();
   current = null;
-  progress = 0;
   bucket = process.env["TARGET_BUCKET"];
   inputExt = ".mp4";
   outputExt = ".webm";
@@ -36,7 +35,10 @@ export class App {
     if (this.queue.size === 0) return;
     const [{ item }] = this.queue.values();
     this.current = item.etag;
-    this.compress(item);
+    await this.compress(item);
+    this.queue.delete(item.etag);
+    this.current = null;
+    this.getNext();
   }
 
   async compress(item) {
@@ -45,7 +47,7 @@ export class App {
     const tmpDoneFile = `./tmp/${item.etag}${this.outputExt}`;
     await this.minioClient.fGetObject(this.bucket, item.name, tmpFile);
 
-    const output = () => (data) => {
+    const output = (data) => {
       let str = data
         .toString()
         .split(/(\r\n|\n)+/)
@@ -63,21 +65,19 @@ export class App {
         tmpFile,
         "-c:v libvpx-vp9",
         "-crf 40",
-        "-deadline best",
+        "-deadline realtime",
+        "-cpu-used -8",
         tmpDoneFile,
       ],
-      {
-        shell: true,
-        env: { ...process.env },
-      }
+      { shell: true, env: { ...process.env } }
     );
 
-    await new Promise((resolve) => {
-      proc.stdout.on("data", output("data"));
-      proc.stderr.on("data", output("error"));
+    await new Promise((resolve, reject) => {
+      proc.stdout.on("data", output);
+      proc.stderr.on("data", output);
       proc.on("exit", (code) => {
-        console.log(`Child exited with code ${code}`);
-        resolve(true);
+        if (code === 0) return resolve(true);
+        reject();
       });
     });
 
@@ -86,20 +86,29 @@ export class App {
       `${name}${this.outputExt}`,
       tmpDoneFile
     );
-    unlink(tmpFile);
-    unlink(tmpDoneFile);
-    await this.minioClient.removeObject(this.bucket, item.name);
 
-    this.queue.delete(item.etag);
-    this.current = null;
-    this.progress = 0;
-
-    this.getNext();
+    return Promise.all([
+      unlink(tmpFile),
+      unlink(tmpDoneFile),
+      this.minioClient.removeObject(this.bucket, item.name),
+    ]);
   }
 
   run() {
     this.fetchBucket();
     setInterval(() => this.fetchBucket(), 5000);
+  }
+
+  async test() {
+    const name = "sample.mp4";
+    const { etag } = await this.minioClient.fPutObject(
+      this.bucket,
+      name,
+      `./assets/${name}`
+    );
+
+    await this.compress({ etag, name });
+    return this.minioClient.removeObject(this.bucket, "sample.webm");
   }
 }
 
