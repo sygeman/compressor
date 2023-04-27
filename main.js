@@ -50,7 +50,7 @@ export class App {
         .input(tmpFile)
         .withOptions(["-c:v libvpx-vp9", "-crf 40", "-deadline best"])
         .save(tmpDoneFile)
-        .on("progress", ({ percent }) => (this.progress = percent.toFixed(2)))
+        .on("progress", ({ percent }) => console.log(name, percent.toFixed(2)))
         .on("error", (err) => reject(err))
         .on("end", async () => {
           await unlink(tmpFile);
@@ -75,14 +75,7 @@ export class App {
 
   run() {
     this.fetchBucket();
-
-    setInterval(() => {
-      if (this.current) {
-        const item = this.queue.get(this.current);
-        console.log(`${item.item.name}: ${this.progress}%`);
-      }
-      this.fetchBucket();
-    }, 5000);
+    setInterval(() => this.fetchBucket(), 5000);
   }
 }
 
