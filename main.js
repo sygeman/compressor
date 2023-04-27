@@ -1,6 +1,6 @@
 import { extname, parse } from "path";
-import ffmpeg from "fluent-ffmpeg";
 import { unlink } from "fs/promises";
+import { spawn } from "child_process";
 import Minio from "minio";
 import dotenv from "dotenv";
 
@@ -45,17 +45,40 @@ export class App {
     const tmpDoneFile = `./tmp/${item.etag}${this.outputExt}`;
     await this.minioClient.fGetObject(this.bucket, item.name, tmpFile);
 
-    await new Promise((resolve, reject) => {
-      ffmpeg()
-        .input(tmpFile)
-        .withOptions(["-c:v libvpx-vp9", "-crf 40", "-deadline best"])
-        .save(tmpDoneFile)
-        .on("progress", ({ percent }) => console.log(name, percent.toFixed(2)))
-        .on("error", (err) => reject(err))
-        .on("end", async () => {
-          await unlink(tmpFile);
-          resolve(true);
-        });
+    const output = () => (data) => {
+      let str = data
+        .toString()
+        .split(/(\r\n|\n)+/)
+        .filter((i) => i.trim().length);
+      str.forEach((row) => {
+        console.log(row);
+      });
+    };
+
+    let proc = spawn(
+      "ffmpeg",
+      [
+        "-y",
+        "-i",
+        tmpFile,
+        "-c:v libvpx-vp9",
+        "-crf 40",
+        "-deadline best",
+        tmpDoneFile,
+      ],
+      {
+        shell: true,
+        env: { ...process.env },
+      }
+    );
+
+    await new Promise((resolve) => {
+      proc.stdout.on("data", output("data"));
+      proc.stderr.on("data", output("error"));
+      proc.on("exit", (code) => {
+        console.log(`Child exited with code ${code}`);
+        resolve(true);
+      });
     });
 
     await this.minioClient.fPutObject(
@@ -63,7 +86,8 @@ export class App {
       `${name}${this.outputExt}`,
       tmpDoneFile
     );
-    await unlink(tmpDoneFile);
+    unlink(tmpFile);
+    unlink(tmpDoneFile);
     await this.minioClient.removeObject(this.bucket, item.name);
 
     this.queue.delete(item.etag);
