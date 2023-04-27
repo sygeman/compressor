@@ -48,7 +48,7 @@ export class App {
     await new Promise((resolve, reject) => {
       ffmpeg()
         .input(tmpFile)
-        .inputOptions("-hwaccel auto")
+        .withOptions(["-c:v libvpx-vp9", "-crf 40", "-deadline best"])
         .save(tmpDoneFile)
         .on("progress", ({ percent }) => (this.progress = percent.toFixed(2)))
         .on("error", (err) => reject(err))
