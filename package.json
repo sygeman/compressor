@@ -6,7 +6,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "start": "node main.mjs"
+    "start": "node ./src/index.mjs",
+    "test": "node ./src/test.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.321.1",
