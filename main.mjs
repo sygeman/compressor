@@ -1,7 +1,6 @@
 import { extname, parse } from "path";
 import { unlink } from "fs/promises";
 import { createReadStream, createWriteStream } from "fs";
-import { Readable } from "stream";
 import { pipeline } from "stream/promises";
 import { spawn } from "child_process";
 import dotenv from "dotenv";
@@ -26,8 +25,8 @@ export class App {
     region: "us-east-1",
     endpoint: process.env["S3_ENDPOINT"],
     credentials: {
-      accessKeyId: process.env["S3_ACCESS_KEY"] as string,
-      secretAccessKey: process.env["S3_SECRET_KEY"] as string,
+      accessKeyId: process.env["S3_ACCESS_KEY"],
+      secretAccessKey: process.env["S3_SECRET_KEY"],
     },
   });
 
@@ -70,10 +69,7 @@ export class App {
       new GetObjectCommand({ Bucket: this.bucket, Key: item.name })
     );
 
-    await pipeline(
-      readObjectResult.Body as Readable,
-      createWriteStream(tmpFile)
-    );
+    await pipeline(readObjectResult.Body, createWriteStream(tmpFile));
 
     const output = (data) => {
       let str = data

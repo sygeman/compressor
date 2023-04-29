@@ -7,8 +7,6 @@ FROM base as dependencies
 COPY ["package.json", "package-lock.json*", "./"]
 
 RUN npm install --production
-RUN npm install --global tsx
 
 COPY . .
-RUN mkdir tmp
 CMD npm run start

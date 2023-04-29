@@ -399,4 +399,4 @@ dist
 .webpack
 .serverless/**/*.zip
 
-tmp
+tmp/*
