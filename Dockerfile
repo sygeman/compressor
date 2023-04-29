@@ -9,4 +9,5 @@ COPY ["package.json", "package-lock.json*", "./"]
 RUN npm install --production
 
 COPY . .
+RUN mkdir tmp
 CMD npm run start
