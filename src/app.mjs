@@ -2,7 +2,6 @@ import { extname, parse } from "path";
 import { unlink } from "fs/promises";
 import { createReadStream, createWriteStream } from "fs";
 import { pipeline } from "stream/promises";
-import { exec, spawn } from "node:child_process";
 import dotenv from "dotenv";
 import {
   GetObjectCommand,
@@ -11,7 +10,7 @@ import {
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { createS3Client } from "./s3-client.mjs";
-import { execSync, spawnSync } from "child_process";
+import { convertMp4ToWebm } from "./convert-mp4-to-webm.mjs";
 
 dotenv.config();
 
@@ -65,50 +64,10 @@ export class App {
 
     await pipeline(readObjectResult.Body, createWriteStream(tmpFile));
 
-    const framesDataRow = execSync(
-      `ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 ${tmpFile}`
-    )
-      .toString()
-      .trim();
-
-    const allFrames = parseInt(framesDataRow, 10);
-
-    const output = (data) => {
-      let str = data
-        .toString()
-        .split(/(\r\n|\n)+/)
-        .filter((i) => i.trim().length);
-      str.forEach((row) => {
-        if (typeof row === "string" && row.includes("frame=")) {
-          const currentFrame = parseInt(row.slice(6), 10);
-          const percent = (currentFrame / allFrames) * 100;
-          console.log(`${percent.toFixed(2)}%`);
-        }
-      });
-    };
-
-    let proc = spawn(
-      "ffmpeg",
-      [
-        "-y",
-        "-i",
-        tmpFile,
-        "-c:v libvpx-vp9",
-        "-crf 40",
-        "-deadline realtime",
-        "-cpu-used -8",
-        "-progress pipe:1",
-        tmpDoneFile,
-      ],
-      { shell: true, env: { ...process.env } }
-    );
-
-    await new Promise((resolve, reject) => {
-      proc.stdout.on("data", output);
-      proc.on("exit", (code) => {
-        if (code === 0) return resolve(true);
-        reject(code);
-      });
+    await convertMp4ToWebm({
+      inputFile: tmpFile,
+      outputFile: tmpDoneFile,
+      onProgress: (value) => console.log(`${value.toFixed(2)}%`),
     });
 
     await this.s3Client.send(
