@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "start": "tsx main.ts",
+    "start": "npx main.ts",
     "dev": "tsx watch main.ts"
   },
   "dependencies": {
