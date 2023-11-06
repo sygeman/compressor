@@ -1,7 +1,8 @@
-import { extname, parse } from "path";
-import { unlink } from "fs/promises";
-import { createReadStream, createWriteStream } from "fs";
-import { pipeline } from "stream/promises";
+import { extname, parse } from "node:path";
+import { unlink } from "node:fs/promises";
+import { createReadStream, createWriteStream } from "node:fs";
+import { pipeline } from "node:stream/promises";
+
 import dotenv from "dotenv";
 import {
   GetObjectCommand,
@@ -9,6 +10,7 @@ import {
   DeleteObjectCommand,
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
+
 import { createS3Client } from "./s3-client.mjs";
 import { convertMp4ToWebm } from "./convert-mp4-to-webm.mjs";
 

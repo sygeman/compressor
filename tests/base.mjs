@@ -1,6 +1,6 @@
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { App } from "./app.mjs";
-import { createReadStream } from "fs";
+import { App } from "../src/app.mjs";
+import { createReadStream } from "node:fs";
 
 const app = new App();
 
