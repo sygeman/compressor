@@ -4,9 +4,9 @@ node_modules
 npm-debug.log
 dist
 tests
+assets
 
 .git
 .env.example
 .github
-.assets
 .npmrc
