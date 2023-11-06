@@ -64,13 +64,17 @@ export class App {
       new GetObjectCommand({ Bucket: this.bucket, Key: item.name })
     );
 
+    console.log("Start downloading file", name);
+
     await pipeline(readObjectResult.Body, createWriteStream(tmpFile));
+
+    console.log("Start convert", name);
 
     await convertMp4ToWebm({
       inputFile: tmpFile,
       outputFile: tmpDoneFile,
       onProgress: (value) => console.log(`${value.toFixed(2)}%`),
-    });
+    }).catch((err) => console.log(err));
 
     await this.s3Client.send(
       new PutObjectCommand({
